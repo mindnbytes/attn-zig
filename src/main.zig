@@ -2,7 +2,7 @@ const std = @import("std");
 
 const N = 4; // number of tokens
 const D = 4; // embedding dimension
-const H = 2; // attention head dimension
+const Dh = 2; // attention head dimension
 
 fn matmul(
     comptime rows: usize,
@@ -47,40 +47,40 @@ pub fn main(init: std.process.Init) !void {
         .{ 1.0, 0.0, 0.0, 1.0 },
         .{ 2.0, 0.5, 1.0, 0.0 },
     };
-    // Wq: D x H 4 x 2
-    const Wq: [D][H]f32 = .{
+    // Wq: D x Dh 4 x 2
+    const Wq: [D][Dh]f32 = .{
         .{ 0.5, 1.0 },
         .{ 1.0, 0.0 },
         .{ 2.0, 0.5 },
         .{ 0.5, 2.0 },
     };
-    // Wk: D x H 4 x 2
-    const Wk: [D][H]f32 = .{
+    // Wk: D x Dh 4 x 2
+    const Wk: [D][Dh]f32 = .{
         .{ 1.5, 2.0 },
         .{ 1.0, 1.0 },
         .{ 0.5, 1.5 },
         .{ 1.0, 0.0 },
     };
-    // Wv: D x H 4 x 2
-    const Wv: [D][H]f32 = .{
+    // Wv: D x Dh 4 x 2
+    const Wv: [D][Dh]f32 = .{
         .{ 2.5, 0.0 },
         .{ 0.0, 1.5 },
         .{ 1.0, 2.0 },
         .{ 1.0, 0.5 },
     };
 
-    // X * Wq = Q: N x D * D x H = N x H
-    const Q = matmul(N, D, H, X, Wq);
-    // X * Wk = K: N x D * D x H = N x H
-    const K = matmul(N, D, H, X, Wk);
-    // X * Wv = V: N x D * D x H = N x H
-    const V = matmul(N, D, H, X, Wv);
+    // X * Wq = Q: N x D * D x Dh = N x Dh
+    const Q = matmul(N, D, Dh, X, Wq);
+    // X * Wk = K: N x D * D x Dh = N x Dh
+    const K = matmul(N, D, Dh, X, Wk);
+    // X * Wv = V: N x D * D x Dh = N x Dh
+    const V = matmul(N, D, Dh, X, Wv);
 
     var buffer: [1024]u8 = undefined;
     var stdout_file: std.Io.File.Writer = .init(.stdout(), init.io, &buffer);
     const stdout = &stdout_file.interface;
 
-    try printMatrix(N, H, stdout, "Q", Q);
-    try printMatrix(N, H, stdout, "K", K);
-    try printMatrix(N, H, stdout, "V", V);
+    try printMatrix(N, Dh, stdout, "Q", Q);
+    try printMatrix(N, Dh, stdout, "K", K);
+    try printMatrix(N, Dh, stdout, "V", V);
 }
