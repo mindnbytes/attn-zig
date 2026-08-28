@@ -1,0 +1,10 @@
+# Zig build artifacts
+.zig-cache/
+zig-out/
+
+# direnv environment
+.direnv/
+
+# Nix build results
+result
+result-*
