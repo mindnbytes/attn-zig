@@ -78,15 +78,16 @@ pub fn main(init: std.process.Init) !void {
     const V = matmul(N, D, Dh, X, Wv);
 
     // Attention scores Q * Kt: N x Dh * Dh x N = N x N
-    // Each token Queries how relevant each token's Key information is to it
+    // Each query measures its compatibility with every token's key
+    // Q * K -> where/how strongly to attend
     // Query of token i (row) has a Key relevance score of all tokens (colums)
     // We aren't realizing transposed K
     var attn_score: [N][N]f32 = undefined;
     for (0..N) |row| {
         for (0..N) |col| {
             attn_score[row][col] = 0;
-            for (0..Dh) |h| {
-                attn_score[row][col] += Q[row][h] * K[col][h];
+            for (0..Dh) |dim| {
+                attn_score[row][col] += Q[row][dim] * K[col][dim];
             }
             attn_score[row][col] /= sqrtDh;
         }
