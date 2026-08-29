@@ -3,6 +3,7 @@ const std = @import("std");
 const N = 4; // number of tokens
 const D = 4; // embedding dimension
 const Dh = 2; // attention head dimension
+const sqrtDh = std.math.sqrt(@as(f32, Dh)); // scale
 
 fn matmul(
     comptime rows: usize,
@@ -76,6 +77,21 @@ pub fn main(init: std.process.Init) !void {
     // X * Wv = V: N x D * D x Dh = N x Dh
     const V = matmul(N, D, Dh, X, Wv);
 
+    // Attention scores Q * Kt: N x Dh * Dh x N = N x N
+    // Each token Queries how relevant each token's Key information is to it
+    // Query of token i (row) has a Key relevance score of all tokens (colums)
+    // We aren't realizing transposed K
+    var attn_score: [N][N]f32 = undefined;
+    for (0..N) |row| {
+        for (0..N) |col| {
+            attn_score[row][col] = 0;
+            for (0..Dh) |h| {
+                attn_score[row][col] += Q[row][h] * K[col][h];
+            }
+            attn_score[row][col] /= sqrtDh;
+        }
+    }
+    // Print stuff
     var buffer: [1024]u8 = undefined;
     var stdout_file: std.Io.File.Writer = .init(.stdout(), init.io, &buffer);
     const stdout = &stdout_file.interface;
@@ -83,4 +99,5 @@ pub fn main(init: std.process.Init) !void {
     try printMatrix(N, Dh, stdout, "Q", Q);
     try printMatrix(N, Dh, stdout, "K", K);
     try printMatrix(N, Dh, stdout, "V", V);
+    try printMatrix(N, N, stdout, "attn_score", attn_score);
 }
