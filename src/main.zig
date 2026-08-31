@@ -112,25 +112,29 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     try printMatrix(N, N, stdout, "attn_score with mask applied", attn_score);
+
+    // copy scores to weights
+    var attn_weight: [N][N]f32 = undefined;
+    @memcpy(&attn_weight, &attn_score);
     // softmax - but stable (mathematically the same)
     for (0..N) |row| {
         // 1. Find max
         var row_max = -std.math.inf(f32);
         for (0..N) |col| {
-            row_max = @max(row_max, attn_score[row][col]);
+            row_max = @max(row_max, attn_weight[row][col]);
         }
         // 2. Exp(score - max) and aggregate it into the row sum
         var row_exp_sum: f32 = 0; // maybe it's better to start from tiny epsilon here, so not to deal with divide by zero
         for (0..N) |col| {
-            const exp_score = std.math.exp(attn_score[row][col] - row_max);
-            attn_score[row][col] = exp_score;
+            const exp_score = std.math.exp(attn_weight[row][col] - row_max);
+            attn_weight[row][col] = exp_score;
             row_exp_sum += exp_score;
         }
         //  3. Scale the exp score by the row exp score sum
         for (0..N) |col| {
-            attn_score[row][col] /= row_exp_sum;
+            attn_weight[row][col] /= row_exp_sum;
         }
     }
-    // variable name is still score - but it's attention weight now
-    try printMatrix(N, N, stdout, "attention weights", attn_score);
+
+    try printMatrix(N, N, stdout, "attention weights", attn_weight);
 }
