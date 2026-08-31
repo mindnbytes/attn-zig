@@ -124,7 +124,7 @@ pub fn main(init: std.process.Init) !void {
             row_max = @max(row_max, attn_weight[row][col]);
         }
         // 2. Exp(score - max) and aggregate it into the row sum
-        var row_exp_sum: f32 = 0; // maybe it's better to start from tiny epsilon here, so not to deal with divide by zero
+        var row_exp_sum: f32 = 0;
         for (0..N) |col| {
             const exp_score = std.math.exp(attn_weight[row][col] - row_max);
             attn_weight[row][col] = exp_score;
@@ -137,4 +137,8 @@ pub fn main(init: std.process.Init) !void {
     }
 
     try printMatrix(N, N, stdout, "attention weights", attn_weight);
+
+    // compute final part of it - weighted by query-key correspondense pieces of information from V
+    const attn = matmul(N, N, Dh, attn_weight, V);
+    try printMatrix(N, Dh, stdout, "attention finally", attn);
 }
