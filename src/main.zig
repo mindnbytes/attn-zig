@@ -41,6 +41,11 @@ fn printMatrix(
 }
 
 pub fn main(init: std.process.Init) !void {
+    // Print stuff
+    var buffer: [1024]u8 = undefined;
+    var stdout_file: std.Io.File.Writer = .init(.stdout(), init.io, &buffer);
+    const stdout = &stdout_file.interface;
+
     // X: N x D = 4 x 4
     const X: [N][D]f32 = .{
         .{ 0.0, 1.0, 0.0, 2.0 },
@@ -77,6 +82,10 @@ pub fn main(init: std.process.Init) !void {
     // X * Wv = V: N x D * D x Dh = N x Dh
     const V = matmul(N, D, Dh, X, Wv);
 
+    try printMatrix(N, Dh, stdout, "Q", Q);
+    try printMatrix(N, Dh, stdout, "K", K);
+    try printMatrix(N, Dh, stdout, "V", V);
+
     // Attention scores Q * Kt: N x Dh * Dh x N = N x N
     // Each query measures its compatibility with every token's key
     // Q * K -> where/how strongly to attend
@@ -92,13 +101,15 @@ pub fn main(init: std.process.Init) !void {
             attn_score[row][col] /= sqrtDh;
         }
     }
-    // Print stuff
-    var buffer: [1024]u8 = undefined;
-    var stdout_file: std.Io.File.Writer = .init(.stdout(), init.io, &buffer);
-    const stdout = &stdout_file.interface;
-
-    try printMatrix(N, Dh, stdout, "Q", Q);
-    try printMatrix(N, Dh, stdout, "K", K);
-    try printMatrix(N, Dh, stdout, "V", V);
     try printMatrix(N, N, stdout, "attn_score", attn_score);
+    // Causal attention mask - you can do it during the previous step
+    // I just want to print everything out
+    for (0..N) |row| {
+        for (0..N) |col| {
+            if (col > row) {
+                attn_score[row][col] = -std.math.inf(f32);
+            }
+        }
+    }
+    try printMatrix(N, N, stdout, "attn_score with mask applied", attn_score);
 }
